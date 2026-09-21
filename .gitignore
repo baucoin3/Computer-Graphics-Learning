@@ -1,0 +1,18 @@
+# Ryerson course material — proprietary, not for public distribution
+Computer Graphics (CPS 511)/
+VR(CPS643)/
+
+# Build output — generated locally, never committed
+cg-work/build/
+
+# Claude Code internal settings
+.claude/
+
+# macOS
+.DS_Store
+
+# IDE local settings (root only — cg-work/.vscode/ is intentionally tracked)
+/.vscode/
+
+# Old readme (plain text, replaced by README.md)
+readme
