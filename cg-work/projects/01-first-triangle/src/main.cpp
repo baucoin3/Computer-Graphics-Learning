@@ -70,8 +70,12 @@ int main() {
         glfwTerminate();
         return -1;
     }
+    // the context which is a record of gpu driver (running on cpu) of everything that was configured VAO, shader program thats active etc
+    // ** this context is the cpu side gpu driver (lives on cpu) and contains the pointers to the gpu (i.e. where in vram is this)
     glfwMakeContextCurrent(window);
 
+    // context must exist before checking if glad exists
+    
     // ── LOAD OPENGL FUNCTIONS VIA GLAD ───────────────────────────────────────
     // On Windows/Mac, OpenGL functions are not available by default.
     // GLAD loads the function pointers at runtime from the GPU driver.
@@ -79,6 +83,10 @@ int main() {
         std::cerr << "Failed to initialize GLAD\n";
         return -1;
     }
+    //  what happens when someone resizes the window
+    // Could potentially have 2 view ports for split screen
+    // If i change this for some reason maybe mac related it always stays in the centre
+    
     glViewport(0, 0, 800, 600); // Pipeline: Viewport Transform
                                  // Tell GPU: NDC [-1,1] maps to pixels [0..800] x [0..600]
 
@@ -126,6 +134,8 @@ int main() {
     glBindVertexArray(VAO);         // start recording into this VAO
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    
+    // actually upload the data to the buffer
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
     // GL_STATIC_DRAW: data won't change (hint to GPU for memory placement)
 

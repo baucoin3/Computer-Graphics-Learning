@@ -148,4 +148,33 @@ See: [Sept14-L3-MVP.md](Sept14-L3-MVP.md)
 
 Covers: why `uniform` variables exist, GLM column-major storage, transform order in GLM (right-multiply convention), lookAt matrix derivation, perspective matrix derivation from similar triangles, full MVP code with animation.
 
+---
+
+# LESSON 4 — Lighting and Shading (Theory)
+
+Lesson 4 is split across three files. Read them in order.
+
+**Goal:** Understand every shading model from flat to PBR at the math level, know where each runs in the pipeline, and understand the industry context before writing your first lit fragment shader.
+
+## Reading Order
+
+| File | What it covers |
+|---|---|
+| [Sept21-L4A-Light-Surface-Physics.md](Sept21-L4A-Light-Surface-Physics.md) | What a lighting model approximates, diffuse vs specular reflection physics, Lambert's cosine law full derivation + worked examples, ambient/diffuse/specular decomposition with complete numeric Phong calculation, directional and point light math including attenuation formula |
+| [Sept21-L4B-Shading-Models.md](Sept21-L4B-Shading-Models.md) | Flat shading (per-face normal, face normal derivation), Lambert diffuse-only model, Gouraud shading (vertex shader execution, interpolated color, specular artifact explanation), Phong shading (fragment shader execution, interpolated normals, why it fixes Gouraud), Blinn-Phong (half-vector H, why it replaced Phong), shininess exponent comparison, full side-by-side model summary |
+| [Sept21-L4C-Modern-Shading-PBR.md](Sept21-L4C-Modern-Shading-PBR.md) | Why Blinn-Phong fails (energy non-conservation, metals wrong, grazing artifacts), the rendering equation conceptually, BRDF definition, Cook-Torrance D/F/G terms explained, metallic-roughness parameter model, where shading lives in the pipeline per era, deferred rendering overview, IBL concept, full industry mapping |
+
+## Lesson 4 Check — Questions to Answer Before Shader Implementation
+
+1. Lambert's cosine law: what is the formula and why does cos(θ) appear?
+2. Why clamp `N · L` to `max(0, N · L)` instead of using the raw dot product?
+3. What is the difference between Gouraud shading and Phong shading? What gets interpolated in each?
+4. Why does Gouraud shading produce incorrect specular highlights on curved surfaces?
+5. What is the Blinn-Phong half-vector H, how is it computed, and why does it replace R · V?
+6. What does the shininess exponent n control visually? What does a high vs low n look like?
+7. Name two ways the Phong lighting model violates physical constraints (answered in L4C).
+8. What are the two parameters in the PBR metallic-roughness model, and what does each control?
+9. What does the Fresnel term describe, and why does it matter for metallic vs non-metallic surfaces?
+10. In a forward rendering pipeline, where in the vertex/fragment shader chain does Blinn-Phong lighting math run?
+
 
