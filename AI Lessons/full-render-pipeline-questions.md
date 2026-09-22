@@ -3,4 +3,4 @@ expalin the winding and how the front back faces are actually found in each tria
 please go into more depth and dont draw ascci diagrams give me full pictures when required to help me understand how this stage works in depth
 
 
-2:
+2: 

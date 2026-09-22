@@ -33,4 +33,4 @@ endfunction()
 # Each line adds one project. CMake reads that project's CMakeLists.txt and
 # registers its executable. All projects share this one configure step.
 add_subdirectory(projects/01-first-triangle)
-add_subdirectory(projects/02-first-basic-program)
+add_subdirectory(projects/02-full-render-pipeline-scratch)
