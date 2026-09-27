@@ -25,6 +25,7 @@ FOLDER="$ROOT/projects/${NUM}-${FINAL_NAME}"
 
 # Create directory structure
 mkdir -p "${FOLDER}/src"
+mkdir -p "${FOLDER}/shaders"
 
 # Boilerplate main.cpp: includes + window creation only, nothing else
 cat > "${FOLDER}/src/main.cpp" << EOF
@@ -68,9 +69,12 @@ int main() {
 }
 EOF
 
-# Project-level CMakeLists.txt: one line
+# Project-level CMakeLists.txt
 cat > "${FOLDER}/CMakeLists.txt" << EOF
 add_gl_project(${FINAL_NAME} src/main.cpp)
+
+target_compile_definitions(${FINAL_NAME} PRIVATE
+    SHADER_DIR="\${CMAKE_CURRENT_SOURCE_DIR}/shaders/")
 EOF
 
 # Append add_subdirectory to root CMakeLists.txt
