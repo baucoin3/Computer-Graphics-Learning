@@ -11,6 +11,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Find GLFW and OpenGL once at root. Every project inherits these via target_link_libraries.
 find_package(OpenGL REQUIRED)
 find_package(glfw3 3.3 REQUIRED)
+find_package(glm REQUIRED)
 
 # GLAD: compiled once as a static library, linked into every project.
 # PUBLIC on target_include_directories means any target that links glad
@@ -23,7 +24,7 @@ target_include_directories(glad PUBLIC vendor/glad/include)
 # Usage: add_gl_project(my-project src/main.cpp src/other.cpp ...)
 function(add_gl_project name)
     add_executable(${name} ${ARGN})
-    target_link_libraries(${name} PRIVATE OpenGL::GL glfw glad)
+    target_link_libraries(${name} PRIVATE OpenGL::GL glfw glad glm::glm)
     # Silence Apple's OpenGL deprecation warnings (they deprecated OpenGL in favour
     # of Metal, but OpenGL 3.3 still works fine on macOS).
     target_compile_definitions(${name} PRIVATE GL_SILENCE_DEPRECATION)
