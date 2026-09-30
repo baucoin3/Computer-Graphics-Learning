@@ -35,3 +35,4 @@ endfunction()
 # registers its executable. All projects share this one configure step.
 add_subdirectory(projects/01-first-triangle)
 add_subdirectory(projects/02-full-render-pipeline-scratch)
+add_subdirectory(projects/03-full-render-pipeline-game-structure)

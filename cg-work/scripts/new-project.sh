@@ -3,8 +3,17 @@ set -e
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
+# --- Flag parsing ---
+FULL_PIPELINE=false
+while [[ "$1" == --* ]]; do
+    case "$1" in
+        --full-pipeline) FULL_PIPELINE=true; shift ;;
+        *) echo "Unknown flag: $1"; exit 1 ;;
+    esac
+done
+
 if [ -z "$1" ]; then
-    echo "Usage: ./scripts/new-project.sh <project-name>"
+    echo "Usage: ./scripts/new-project.sh [--full-pipeline] <project-name>"
     exit 1
 fi
 
@@ -68,6 +77,20 @@ int main() {
     return 0;
 }
 EOF
+
+# --- Full pipeline: overwrite main.cpp and copy headers + shaders from templates ---
+if [ "$FULL_PIPELINE" = true ]; then
+    TMPL="$ROOT/scripts/templates/full-pipeline"
+    if [ ! -d "$TMPL" ]; then
+        echo "Error: templates not found at $TMPL"
+        exit 1
+    fi
+    cp "$TMPL"/src/*.h       "${FOLDER}/src/"
+    cp "$TMPL"/src/main.cpp  "${FOLDER}/src/main.cpp"
+    cp "$TMPL"/shaders/*     "${FOLDER}/shaders/"
+    # Substitute the placeholder window title with the actual project name
+    sed -i '' "s/PROJECT_NAME/${FINAL_NAME}/g" "${FOLDER}/src/main.cpp"
+fi
 
 # Project-level CMakeLists.txt
 cat > "${FOLDER}/CMakeLists.txt" << EOF
