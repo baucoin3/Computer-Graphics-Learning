@@ -116,11 +116,70 @@ cmake --build build --target first-triangle
 
 ## Adding a New Project
 
+`new-project.sh` creates a numbered project folder, writes boilerplate, and reconfigures CMake automatically. Two modes:
+
+### Blank canvas
+
 ```bash
 cd cg-work
-./scripts/new-project.sh your-project-name
-cmake --build build --target your-project-name
-./build/projects/NN-your-project-name/your-project-name
+./scripts/new-project.sh <project-name>
 ```
 
-The script creates the folder structure, boilerplate, and reconfigures CMake automatically.
+Creates a minimal window + clear-color render loop with nothing rendered. Use this when you want to build the structure yourself from scratch.
+
+### Full pipeline boilerplate
+
+```bash
+cd cg-work
+./scripts/new-project.sh --full-pipeline <project-name>
+```
+
+Copies the complete game-structure boilerplate from `scripts/templates/full-pipeline/` into the new project. Everything below is wired and compiles immediately — add objects to the `objects` vector in `main.cpp` and write your shader logic.
+
+| File | What it provides |
+|---|---|
+| `Shader.h` | Compile/link/error-check + typed uniform setters (`setMat4`, `setVec3`, `setFloat`, etc.) with per-program location cache |
+| `Camera.h` | FPS camera — yaw/pitch Euler angles, `processKeyboard(direction, deltaTime)`, `processMouseMovement(dx, dy)` |
+| `Mesh.h` | RAII VAO/VBO/EBO wrapper for interleaved pos+normal geometry; single `draw()` call |
+| `Transform.h` | Position/rotation/scale → model matrix (`T × Rz × Ry × Rx × S`) |
+| `Material.h` | Per-object color, ambient, diffuse, specular, shininess — uploaded as uniforms |
+| `Light.h` | World-space light position and color |
+| `AABB.h` | Axis-aligned bounding box + `intersects()` / `containsPoint()` |
+| `GameObject.h` | `Transform + Material + Mesh* + getAABB()` — put these in a `std::vector` and loop |
+| `blinnPhong.vert/frag` | Blinn-Phong shaders — no hard-coded values; all lighting parameters come from uniforms |
+| `main.cpp` | Mouse callback, FPS camera wired, delta time, empty `std::vector<GameObject>`, full render loop |
+
+Controls: `WASD` move, mouse look, `Escape` quit. AABB collision prevents walking through collidable objects.
+
+**Reference demo:** `projects/03-full-render-pipeline-game-structure` shows the full boilerplate in action — three lit cubes on a ground plane, walkable with collision.
+
+### Build and run
+
+```bash
+cmake --build build --target <project-name>
+./build/projects/NN-<project-name>/<project-name>
+```
+
+Replace `NN` with the auto-assigned project number printed by the script.
+
+---
+
+## Deleting a Project
+
+```bash
+cd cg-work
+./scripts/delete-project.sh <exact-folder-name>
+```
+
+Pass the full folder name including the number prefix, e.g. `04-my-experiment`. The script will:
+
+1. Confirm the folder exists under `projects/`
+2. Confirm the matching `add_subdirectory` line exists in `CMakeLists.txt`
+3. Print what it is about to delete and prompt you to **type the folder name again** to confirm
+4. Remove the folder, strip the CMake line, and reconfigure
+
+To see existing project names before running:
+
+```bash
+ls cg-work/projects/
+```

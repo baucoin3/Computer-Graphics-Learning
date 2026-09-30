@@ -1,0 +1,336 @@
+==============================================================================
+  CG LEARNING ROADMAP — Oct–Dec 2026
+  Reference only. Lessons written on demand. Order matters — do not skip ahead.
+==============================================================================
+
+  Everything below flows from one core idea:
+    How do you DESCRIBE a surface → how does LIGHT interact with it →
+    how do you COMPUTE that interaction EFFICIENTLY at scale →
+    how do you compute it CORRECTLY (ground truth)?
+
+  Textures, PBR, shadow maps, deferred rendering, and ray tracing are not
+  separate topics. They are the same question answered at different levels.
+
+==============================================================================
+  PRE-THEME A — OBJECT REPRESENTATION + MESH LOADING
+  "What IS a 3D object and how does it get into OpenGL?"
+  (Completed: Sept 2026)
+==============================================================================
+
+  L7B · Polygon Mesh Fundamentals                                [Sept30-L7B]
+  ─────────────────────────────────────────────────────────────────────────
+  Vertices/edges/faces, winding order, cross product → face normals,
+  flat vs indexed geometry, vertex splitting, half-edge structure,
+  smooth vs flat shading, taxonomy of other representations.
+
+  L7C · Blender Mesh Internals and Export                        [Sept30-L7C]
+  ─────────────────────────────────────────────────────────────────────────
+  BMesh / BMVert / BMLoop / BMFace, UVs on loops not vertices,
+  modifier stack, UV unwrapping as parameterization, custom split normals,
+  Z-up vs Y-up trap, what survives .obj and glTF export.
+
+  L7D · File Formats — .obj and glTF 2.0 in Depth               [Sept30-L7D]
+  ─────────────────────────────────────────────────────────────────────────
+  .obj grammar, triple-index problem, .mtl Phong material format,
+  glTF JSON hierarchy, accessor/bufferView/buffer chain,
+  metallic-roughness PBR material model, .obj vs glTF comparison.
+
+  L7E · Loading a Mesh into OpenGL (tinyobjloader)               [Sept30-L7E]
+  ─────────────────────────────────────────────────────────────────────────
+  tinyobjloader integration, deduplication hash map, interleaved VBO,
+  EBO indexed draw, Lengyel tangent generation, multi-material submeshes.
+  Project: replace hand-coded cube with loaded .obj model.
+  ── Prerequisite for all texture/PBR lessons (A1 onward) ──
+
+==============================================================================
+  THEME A — SURFACE DESCRIPTION
+  "What does a surface look like, in full detail?"
+==============================================================================
+
+  A1 · UV Mapping + Texture Fundamentals                         [L8A–L8B]
+  ─────────────────────────────────────────────────────────────────────────
+  Stage 1 · What UVs are: parameterization, mapping 3D surface to 2D texture
+  Stage 2 · UV seams, atlases, texture coordinate conventions (OpenGL vs DX)
+  Stage 3 · Texture sampling: nearest, bilinear, trilinear filtering — why each exists
+  Stage 4 · Mipmap theory: aliasing cause, mip chain generation, when GPU picks which level
+  Stage 5 · Anisotropic filtering: oblique surfaces, bandwidth cost, quality tradeoff
+  ── Project addition: textured crate/wall in existing 03 scene ──
+
+  A2 · Normal Mapping                                             [L8C–L8D]
+  ─────────────────────────────────────────────────────────────────────────
+  Stage 1 · Why per-vertex normals are insufficient — geometric detail limit
+  Stage 2 · Tangent space: what T, B, N are and how they form a local coordinate frame
+  Stage 3 · TBN matrix derivation: how to compute tangent + bitangent from UV deltas
+  Stage 4 · Sampling normal map in fragment shader, transforming to world space
+  Stage 5 · Common bugs: inverted green channel (DX vs GL convention), missing tangents
+  ── Project addition: normal map on textured surface, visible lighting change ──
+
+  A3 · Material Maps + Packed Textures                            [L8E]
+  ─────────────────────────────────────────────────────────────────────────
+  Stage 1 · Specular maps: per-pixel shininess variation
+  Stage 2 · Roughness + metallic maps: what each channel encodes
+  Stage 3 · Packed textures: R=AO, G=roughness, B=metallic — why engines pack channels
+  Stage 4 · Texture units + binding multiple textures in one draw call
+  ── No new project — apply to existing textured scene ──
+
+  A4 · Mesh Loading (tinyobjloader)                               [L8F]
+  ─────────────────────────────────────────────────────────────────────────
+  Stage 1 · .obj format: vertices, normals, UVs, faces — what the file contains
+  Stage 2 · tinyobjloader integration: parsing into interleaved VBO layout
+  Stage 3 · Generating tangents at load time for normal mapping
+  Stage 4 · Handling multiple materials per mesh (submeshes)
+  ── Project: load a real .obj model instead of hand-coded cube ──
+
+==============================================================================
+  THEME B — LIGHT–SURFACE INTERACTION (THE RENDERING EQUATION)
+  "How does light physically interact with this surface?"
+==============================================================================
+
+  B1 · The Rendering Equation                                     [L9A]
+  ─────────────────────────────────────────────────────────────────────────
+  Stage 1 · Why Blinn-Phong is wrong: not energy-conserving, not physically motivated
+  Stage 2 · The rendering equation: L_o = L_e + ∫ f_r(ω_i,ω_o) L_i cosθ dω_i
+  Stage 3 · Each term unpacked: outgoing radiance, emittance, BRDF, incident radiance
+  Stage 4 · Why solving the integral is hard — infinite light bounces, the Monte Carlo problem
+  Stage 5 · How real-time rendering approximates this (shadow maps, ambient terms, probes)
+
+  B2 · PBR — Cook-Torrance BRDF                                   [L9B–L9C]
+  ─────────────────────────────────────────────────────────────────────────
+  Stage 1 · Microfacet theory: surfaces as statistical distribution of tiny mirrors
+  Stage 2 · D term — GGX normal distribution: controls highlight shape vs roughness
+  Stage 3 · G term — geometric self-shadowing (Smith method): masking and shadowing
+  Stage 4 · F term — Fresnel-Schlick: reflectance increases at grazing angles
+  Stage 5 · Full BRDF assembly: (D·G·F) / (4·cosθ_i·cosθ_o), energy conservation proof
+  ── Project: PBR sphere scene, vary metallic + roughness, compare to Blinn-Phong ──
+
+  B3 · HDR Framebuffer + Tone Mapping                             [L9D]
+  ─────────────────────────────────────────────────────────────────────────
+  Stage 1 · Why LDR fails with PBR: physical light values exceed 0–1 range
+  Stage 2 · Floating-point FBO: GL_RGBA16F, rendering to HDR target
+  Stage 3 · Reinhard tone mapping: compress HDR to LDR, preserve highlights
+  Stage 4 · ACES filmic curve: industry standard, S-curve contrast
+  Stage 5 · Gamma correction: linear workflow, sRGB output — why it matters
+  ── Project addition: switch 03 scene to HDR pipeline ──
+
+  B4 · Multiple Lights + Light Structures in GLSL                 [L9E]
+  ─────────────────────────────────────────────────────────────────────────
+  Stage 1 · Uniform arrays: uniform Light lights[N], struct in GLSL
+  Stage 2 · Point light attenuation: 1/(k_c + k_l·d + k_q·d²) — derivation
+  Stage 3 · Directional vs point vs spot: math differences, use cases
+  Stage 4 · UBOs (Uniform Buffer Objects): share uniforms across shaders, binding points
+  ── Project: add 4 coloured point lights to PBR scene ──
+
+==============================================================================
+  THEME C — EFFICIENT COMPUTATION AT SCALE
+  "How do you render this correctly without it being impossibly slow?"
+==============================================================================
+
+  C1 · Shadow Mapping                                             [L10A–L10B]
+  ─────────────────────────────────────────────────────────────────────────
+  Stage 1 · Core algorithm: render scene depth from light POV into shadow map texture
+  Stage 2 · Sampling shadow map in fragment shader: compare fragment depth to stored depth
+  Stage 3 · Shadow acne: cause (self-shadowing precision), fix (depth bias)
+  Stage 4 · Peter-panning: over-bias side effect, how to tune
+  Stage 5 · PCF (percentage closer filtering): sample kernel, soft shadow edges
+  ── Project: add directional shadow to PBR scene ──
+
+  C2 · Cascaded Shadow Maps (concept only)                        [L10C]
+  ─────────────────────────────────────────────────────────────────────────
+  Stage 1 · Why single shadow map fails at large distances: resolution problem
+  Stage 2 · CSM: split frustum into depth ranges, separate shadow map per cascade
+  Stage 3 · Cascade selection in shader, blend between cascades
+  Stage 4 · Where this lives in production: Unreal's shadow system, Unity HDRP
+  ── No implementation — concept and recognition only ──
+
+  C3 · Deferred Rendering Architecture                            [L10D–L10E]
+  ─────────────────────────────────────────────────────────────────────────
+  Stage 1 · Forward rendering cost: O(fragments × lights) — why it breaks at 100+ lights
+  Stage 2 · G-buffer design: albedo, world normal, depth, material params — layout decisions
+  Stage 3 · Geometry pass: write G-buffer, no lighting computed here
+  Stage 4 · Light pass: fullscreen quad, reconstruct world pos from depth, compute lighting
+  Stage 5 · Tradeoffs: MSAA incompatibility, transparent object problem, memory bandwidth
+  ── Project: port 03 scene to deferred renderer, add 10+ point lights ──
+
+  C4 · Instanced Rendering + Frustum Culling                      [L11A–L11B]
+  ─────────────────────────────────────────────────────────────────────────
+  Stage 1 · Draw call overhead: why 10,000 individual draw calls kills performance
+  Stage 2 · glDrawElementsInstanced + gl_InstanceID: per-instance transform via SSBO/VBO
+  Stage 3 · Frustum culling: extract planes from projection matrix, AABB vs frustum test
+  Stage 4 · Combining: cull CPU-side, submit only visible instances in one draw call
+  ── Project: render 500 cubes instanced, profile vs naive loop in RenderDoc ──
+
+  C5 · RenderDoc + GPU Profiling                                  [L11C]
+  ─────────────────────────────────────────────────────────────────────────
+  Stage 1 · Capture a frame: what RenderDoc shows (draw call list, state, textures)
+  Stage 2 · Reading the G-buffer passes in your deferred renderer
+  Stage 3 · Identifying bottlenecks: overdraw, texture fetch, vertex throughput
+  Stage 4 · Timing individual passes: where is your frame budget going?
+  ── Mandatory: profile your own deferred scene before moving to Theme D ──
+
+==============================================================================
+  THEME D — SCREEN-SPACE APPROXIMATIONS
+  "Approximate expensive global effects using only what's on screen"
+==============================================================================
+
+  D1 · Post-Processing Pipeline Architecture                      [L12A]
+  ─────────────────────────────────────────────────────────────────────────
+  Stage 1 · Fullscreen quad: render to FBO, then draw quad with result as texture
+  Stage 2 · Ping-pong FBOs: chain multiple passes (blur → composite → output)
+  Stage 3 · When to run post-process: after deferred light pass, before UI
+  Stage 4 · Gamma + HDR in post-process chain: order matters
+
+  D2 · SSAO (Screen-Space Ambient Occlusion)                      [L12B–L12C]
+  ─────────────────────────────────────────────────────────────────────────
+  Stage 1 · What AO is: surfaces in crevices receive less ambient light
+  Stage 2 · Screen-space limitation: only sees what's on screen, ignores occluders behind camera
+  Stage 3 · Sample kernel: hemisphere of random samples in normal-oriented tangent space
+  Stage 4 · Occlusion test: sample depth vs scene depth — count how many are occluded
+  Stage 5 · Blur pass: noise reduction, bilateral blur to preserve edges
+  ── Project addition: SSAO pass in deferred renderer ──
+
+  D3 · Bloom                                                      [L12D]
+  ─────────────────────────────────────────────────────────────────────────
+  Stage 1 · Bright-pass extraction: threshold HDR buffer, keep pixels above cutoff
+  Stage 2 · Gaussian blur: separable horizontal + vertical passes, kernel math
+  Stage 3 · Additive composite: blend blurred bright buffer back onto scene
+  Stage 4 · Tweaking: threshold, blur radius, blend strength — art vs engineering tradeoff
+
+  D4 · Transparency + Blending                                    [L12E]
+  ─────────────────────────────────────────────────────────────────────────
+  Stage 1 · GL_BLEND modes: src/dst factors, alpha blending equation
+  Stage 2 · Order-dependence problem: transparent objects must sort back-to-front
+  Stage 3 · OIT (Order Independent Transparency) concept: why sorting fails for intersecting geo
+  Stage 4 · Practical approach: opaque deferred pass → forward transparent pass on top
+
+  D5 · Anti-Aliasing                                              [L12F]
+  ─────────────────────────────────────────────────────────────────────────
+  Stage 1 · Why aliasing happens: sampling theorem, Nyquist rate on pixel grid
+  Stage 2 · MSAA: supersample at rasterizer, average — why it breaks with deferred G-buffer
+  Stage 3 · FXAA: post-process edge detection + blend — cheap, blurry
+  Stage 4 · TAA: temporal accumulation across frames — industry standard since ~2016
+
+==============================================================================
+  THEME E — GROUND-TRUTH LIGHT TRANSPORT
+  "What is the correct answer that all real-time approximations are approximating?"
+==============================================================================
+
+  E1 · Ray Tracing Fundamentals                                   [L13A–L13B]
+  ─────────────────────────────────────────────────────────────────────────
+  Stage 1 · Ray definition: origin + direction, parametric form P(t) = O + t·D
+  Stage 2 · Ray-sphere intersection: quadratic derivation, discriminant, t values
+  Stage 3 · Ray-triangle intersection: Möller–Trumbore algorithm derivation
+  Stage 4 · Ray-AABB intersection: slab method, tmin/tmax per axis, early exit
+  Stage 5 · Shading at hit point: recover normal, apply Blinn-Phong or PBR at hit
+
+  E2 · BVH — Bounding Volume Hierarchy                            [L13C]
+  ─────────────────────────────────────────────────────────────────────────
+  Stage 1 · Why naive: testing every ray against every triangle = O(rays × triangles)
+  Stage 2 · BVH concept: recursively wrap geometry in AABBs, skip whole subtrees on miss
+  Stage 3 · Midpoint split: simplest build strategy, why it fails for uneven distributions
+  Stage 4 · SAH (Surface Area Heuristic): cost function, why it produces better trees
+  Stage 5 · Traversal: stack-based, front-to-back order, early termination on hit
+
+  E3 · Whitted Ray Tracer — Shadows, Reflections, Refraction      [L13D–L13E]
+  ─────────────────────────────────────────────────────────────────────────
+  Stage 1 · Shadow rays: cast toward light, any hit = shadowed — scene bias trick
+  Stage 2 · Mirror reflection: reflect ray direction, recurse, clamp depth
+  Stage 3 · Refraction: Snell's law derivation, total internal reflection condition
+  Stage 4 · Recursive depth: why unbounded recursion explodes, depth limit
+  Stage 5 · Image output: PPM format, gamma correction, tone mapping before write
+  ── Project: Cornell box render — diffuse walls, mirror sphere, glass sphere ──
+
+  E4 · Path Tracing Theory (no implementation)                    [L14A]
+  ─────────────────────────────────────────────────────────────────────────
+  Stage 1 · Whitted limitation: only handles specular — misses diffuse inter-reflection
+  Stage 2 · Monte Carlo integration: approximate the rendering equation integral via random sampling
+  Stage 3 · Lambertian cosine-weighted hemisphere sampling: why cos-weighted not uniform
+  Stage 4 · Convergence: why more samples = less noise, variance reduction strategies
+  Stage 5 · Where this lives: Cycles (Blender), Arnold (film), Lumen (Unreal), OptiX/DXR
+
+==============================================================================
+  THEME F — SIMULATION + COMPUTE (DIFFERENTIATOR)
+  "GPU computation beyond rendering — separates you from generic game devs"
+==============================================================================
+
+  F1 · Compute Shaders                                            [L15A–L15B]
+  ─────────────────────────────────────────────────────────────────────────
+  Stage 1 · What compute shaders are: GPGPU — arbitrary parallel computation
+  Stage 2 · Workgroup size, dispatch dimensions: how threads are organized
+  Stage 3 · SSBOs (Shader Storage Buffer Objects): read/write from compute shader
+  Stage 4 · Synchronization: memory barriers, why ordering matters on GPU
+  Stage 5 · Example: GPU particle system — update positions in compute, render in vertex
+
+  F2 · GPU Particle System                                        [L15C]
+  ─────────────────────────────────────────────────────────────────────────
+  Stage 1 · Particle data layout in SSBO: position, velocity, lifetime, color
+  Stage 2 · Compute pass: integrate velocity, apply gravity, kill dead particles
+  Stage 3 · Render pass: read same SSBO in vertex shader, billboard quads
+  Stage 4 · Sorting problem: transparent particles need depth sort (or OIT)
+  ── Project: GPU particle system — fire or smoke effect ──
+
+  F3 · SPH Fluid Simulation (concept + optional implementation)   [L15D–L15E]
+  ─────────────────────────────────────────────────────────────────────────
+  Stage 1 · SPH: particles represent fluid, density estimated from neighbours
+  Stage 2 · Pressure + viscosity forces: Navier-Stokes in particle form
+  Stage 3 · Spatial hashing: find neighbours without O(N²) search
+  Stage 4 · GPU SPH: compute shader per-particle, grid cells in SSBO
+  Stage 5 · Rendering fluid: metaballs, marching cubes, or screen-space fluid
+  ── Portfolio differentiator — pursue if targeting simulation roles ──
+
+==============================================================================
+  THEME G — MODERN API AWARENESS (no full implementation)
+  "Know what OpenGL is hiding and where the industry is going"
+==============================================================================
+
+  G1 · What Vulkan Hides That OpenGL Does For You                 [L16A]
+  ─────────────────────────────────────────────────────────────────────────
+  Stage 1 · Command buffers: explicit recording vs OpenGL's immediate submission
+  Stage 2 · Render passes + subpasses: explicit attachment load/store ops
+  Stage 3 · Descriptor sets + pipeline layouts: what uniform caching abstracts
+  Stage 4 · Memory allocation: VMA, explicit GPU heap management
+  Stage 5 · Synchronization: semaphores, fences, pipeline barriers — none hidden
+
+  G2 · Hardware Ray Tracing (DXR / VK_KHR_ray_tracing concept)   [L16B]
+  ─────────────────────────────────────────────────────────────────────────
+  Stage 1 · BLAS + TLAS: acceleration structures built by GPU from your BVH work
+  Stage 2 · Shader binding table: ray generation, closest hit, miss, any-hit shaders
+  Stage 3 · How your software BVH maps to DXR concepts
+  Stage 4 · Where hardware RT is in production: Lumen, Metro Exodus, Cyberpunk 2077
+
+==============================================================================
+  IMMEDIATE NEXT ORDER (do these in sequence, do not reorder)
+==============================================================================
+
+  ✓ L7B · Polygon Mesh Fundamentals           (written Sept30)
+  ✓ L7C · Blender Mesh Internals + Export     (written Sept30)
+  ✓ L7D · File Formats — .obj and glTF        (written Sept30)
+  ✓ L7E · Mesh Loading into OpenGL            (written Sept30)
+
+  1. A1 · UV Mapping + Texture Fundamentals   ← start here next
+  2. A2 · Normal Mapping
+  3. A3 · Material Maps
+  4. A4 · Mesh Loading (now covered by L7E — can skip or treat as review)
+  5. B1 · The Rendering Equation          ← everything downstream depends on this
+  6. B2 · PBR Cook-Torrance BRDF
+  7. B3 · HDR + Tone Mapping
+  8. B4 · Multiple Lights + UBOs
+  9. C1 · Shadow Mapping
+  10. C3 · Deferred Rendering             ← do before screen-space effects
+  11. C4 · Instanced Rendering + Culling
+  12. C5 · RenderDoc profiling            ← before moving to Theme D
+  13. D1 · Post-Processing Pipeline
+  14. D2 · SSAO
+  15. D3 · Bloom
+  16. D4 · Transparency
+  17. D5 · Anti-Aliasing
+  18. E1 · Ray Tracing Fundamentals
+  19. E2 · BVH + SAH
+  20. E3 · Whitted Ray Tracer             ← Cornell box project
+  21. E4 · Path Tracing Theory
+  22. F1 · Compute Shaders
+  23. F2 · GPU Particles
+  24. F3 · SPH Fluid (optional, simulation track)
+  25. G1 · Vulkan Awareness
+  26. G2 · Hardware Ray Tracing Awareness
+
+==============================================================================

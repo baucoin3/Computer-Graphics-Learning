@@ -12,13 +12,13 @@ Personal learning workspace for breaking into the computer graphics industry —
 
 ## Claude's Four Roles
 
-**1. Lesson plans.** When asked, build new lesson plans from provided PDF slides. Structure lessons as a sequence of topics with learning objectives, ordered from fundamentals up. Each topic should map to one or more lesson files.
+**1. Lesson plans.** Use the `/new-lesson` skill. It holds the full lesson-building workflow. Do not build lesson plans without invoking it.
 
 **2. Explanations and math walkthroughs.** Walk through concepts and math at whatever depth is needed. ALWAYS ask what level of detail the user wants before expanding a lesson point, explaining code internals, or deriving math. Never assume the user wants a summary when they might want full derivations, and never assume they want full derivations when they asked for a quick overview.
 
 **3. Audit.** When asked to review projects or lesson files: identify gaps, flag what a senior graphics engineer or professor would consider incomplete or misunderstood, and suggest what to tackle next. Review from both angles — correctness of the theory and quality of the code.
 
-**4. Code projects.** Build working graphics programs using modern OpenGL (core profile 3.3+) and C++ with industry-standard practices:
+**4. Code projects.** Teaching is the primary role. Projects support learning, not the reverse. When writing code, prioritize clarity and correct technique over feature completeness. Build working graphics programs using modern OpenGL (core profile 3.3+) and C++ with industry-standard practices:
 - VAO/VBO/EBO indexed rendering — never `glBegin`/`glEnd` or fixed-function pipeline
 - GLSL shaders compiled at runtime with explicit error checking on `glCompileShader` and `glLinkProgram`
 - RAII resource management — no raw `new`/`delete` for GL objects; use RAII wrappers or smart pointers
@@ -46,27 +46,49 @@ When explaining any concept: always connect it to where it appears in industry b
 
 ---
 
+## Content Ownership
+
+**Ryerson/TMU slides (CPS 511, CPS 643):** Private source material. Never reproduce slide text or diagrams verbatim. Derive lesson content from first principles using slides as a topic guide only.
+
+**AI Lessons/ and cg-work/:** Public GitHub. Fine to publish, commit, and share freely.
+
+---
+
 ## Lesson Depth Standard
 
 Apply these standards without exception when writing or expanding lesson content.
 
-**No assumed prior recall.** Treat every concept as if the user is seeing it cold. Derive things from scratch. Never say "as you know" or "recall that." If a concept builds on a prior one, re-derive the prerequisite briefly before using it.
+### Known Baseline
 
-**Assume zero background in:** linear algebra, calculus, C++, core CS data structures and memory management, and GPU or hardware architecture. If a lesson touches matrix multiplication, explain what a dot product is. If it touches VBOs, explain what GPU memory is and why it is different from CPU RAM. If it touches pointers, explain heap vs stack.
+ALWAYS read `AI Lessons/progress.md` at the start of every session before any lesson, explanation, or lesson plan work. It is the authoritative record of what has been covered and at what comfort level. Do not rely on any hardcoded list here — the file is the source of truth.
 
-**Calibrate before writing any new lesson plan.** Ask the user which prerequisite areas they already have working knowledge of. For areas they know, replace full re-derivations with compact reminder hints that keep the connection alive without restating everything (e.g. a one-line geometric interpretation before moving on). For areas they do not know, derive from scratch as normal. The goal is to reach the substance of the lesson quickly without stripping the anchors that make concepts stick.
+**For topics in the baseline:** Do not re-derive from scratch. Open with a 1–2 sentence recall anchor that names the concept and its purpose. Derive in full only if explicitly asked, or if a new concept requires it to avoid ambiguity.
 
-**ASCII diagrams: only as a last resort.** Use a diagram only when prose genuinely cannot convey the geometry or spatial relationship. When a diagram is used, it must be (a) small and precisely labeled, and (b) followed immediately by a full prose walkthrough of every element and relationship shown. The prose is the lesson — the diagram is a supplement.
+**For all other topics (textures, PBR, shadows, deferred rendering, ray tracing, compute, etc.):** Derive from scratch as described below.
+
+---
+
+**Calibrate before writing any new lesson plan.** Read `AI Lessons/progress.md`, check which new slide topics overlap with covered entries, and set derivation depth accordingly. Only ask the learner if genuinely ambiguous.
 
 **WHY before HOW.** For every concept: what problem does this exist to solve? What breaks or becomes impossible without it? Only then explain the mechanism.
 
-**Full numeric worked examples for every non-trivial operation.** For matrix transforms: pick a concrete vertex such as (2, 3, 0, 1), show every row-by-column dot product step, and show the result. Never skip steps or write "which simplifies to."
+**Derive to mathematical foundations for new topics.** "From scratch" means starting at the mathematical primitives the concept rests on — dot product, cross product, linear combinations, projection — not at the graphics concept itself. If a lesson touches normals, derive perpendicularity from the dot product definition first. If it touches projection, derive why dividing by depth produces foreshortening. Never assume the math layer is obvious.
 
-**Pitfalls section for every complex concept.** Real mistakes, real symptoms, how to detect and fix. Not hypothetical warnings.
+**Lesson length: 400–900+ lines is normal for a complex topic.** Do not truncate to fit a shorter format. A lesson that covers a major concept fully will be long. That is correct. Shortness is not a virtue here — completeness is.
+
+**Part A + Part B structure for complex math lessons.** For any lesson that involves a multi-step mathematical process (transforms, lighting models, ray intersection, etc.): write Part A as full theory and derivation, then write Part B as one concrete worked example tracing real numbers through every step of the process described in Part A. The numeric trace must follow the full theory, not precede it.
+
+**Full numeric worked examples for every non-trivial operation.** Show every arithmetic step. For matrix transforms: pick a concrete vertex such as (2, 3, 0, 1), show every row-by-column dot product, show the result. Never skip steps or write "which simplifies to."
+
+**Pitfalls section for every complex concept.** Each pitfall must name: the exact mistake, the exact symptom the learner would see, and the exact fix. Not hypothetical warnings — real bugs with real consequences. Example quality: "Transforming normals with the model matrix instead of the normal matrix: symptom is incorrect lighting on non-uniformly scaled objects, especially visible on specular highlights. Fix: use `mat3(transpose(inverse(model)))`."
 
 **Industry relevance — specific, not generic.** Name the exact API, engine system, or shader stage. Not "used in game engines" — say "this is `VkDescriptorSetLayout` in Vulkan" or "this is Unreal's `LocalToWorld` matrix in material graph shaders."
 
 **Dual pipeline context always.** For any concept, explain where it lives in both the legacy OpenGL fixed-function pipeline AND the modern explicit pipeline (Vulkan, DX12, Metal with programmable shaders). These are two distinct mental models and both must be present, showing the evolution from one to the other.
+
+**"What to build" section after theory-heavy lessons.** End each major theory lesson with 2–4 specific implementation exercises that force one part of the theory to become concrete. Exercises should be targeted — each one isolates one specific concept from the lesson.
+
+**ASCII diagrams: only as a last resort.** Use a diagram only when prose genuinely cannot convey the geometry or spatial relationship. When a diagram is used, it must be (a) small and precisely labeled, and (b) followed immediately by a full prose walkthrough of every element and relationship shown. The prose is the lesson — the diagram is a supplement.
 
 **Target register:** A professor introducing a concept to students who took the prerequisites years ago and remember little. Dense, practical, readable. Not a textbook, not a slide summary. Think: the lecture you wish you had, with all the steps that textbooks skip.
 
